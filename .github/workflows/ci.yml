@@ -38,7 +38,8 @@ jobs:
 
   firmware:
     name: Firmware build (ESP32-C6), clippy & OTA size gate
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: ESP-IDF v5.2.2's esp-clang needs libxml2.so.2, which Ubuntu 26.04 no longer ships
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -77,14 +78,6 @@ jobs:
       - name: Build firmware
         working-directory: firmware
         run: cargo build --release
-
-      - name: Diagnose ESP-IDF tool install
-        if: failure()
-        run: |
-          df -h /
-          python3 --version
-          python3 "$HOME/.espressif/esp-idf/v5.2.2/tools/idf_tools.py" --non-interactive install --targets esp32c6 || echo "idf_tools exit: $?"
-          python3 "$HOME/.espressif/esp-idf/v5.2.2/tools/idf_tools.py" check || true
 
       - name: Clippy (firmware)
         working-directory: firmware
