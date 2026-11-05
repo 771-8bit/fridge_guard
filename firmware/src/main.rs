@@ -597,6 +597,7 @@ impl App {
     /// 1. Essential alerts in outbox (InactivityAlert, Recovery, DoorOpenAlert)
     /// 2. Scheduled daily report (requires synchronized clock)
     /// 3. Non-essential maintenance messages (LineTest, StatusReport)
+    ///
     /// Non-essential failures do NOT block higher-priority messages.
     fn deliver(&mut self, now_epoch: Option<u64>) {
         if !self.line_retry.is_ready(self.now_ms()) {
