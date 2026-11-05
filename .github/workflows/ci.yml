@@ -67,6 +67,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
+      # ESP-IDF v5.2.2 tooling is only tested with Python 3.12 (docs/BUILD.md)
+      - name: Use Python 3.12 for the ESP-IDF build
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       # Fails with a clear message if firmware/ota_verification_public.pem has not been committed
       - name: Build firmware
         working-directory: firmware
