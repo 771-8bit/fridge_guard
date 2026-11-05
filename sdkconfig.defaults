@@ -1,0 +1,36 @@
+# ESP32-C6 target configuration
+CONFIG_IDF_TARGET="esp32c6"
+CONFIG_IDF_TARGET_ESP32C6=y
+
+# 4 MB Flash configuration for M5Stack NanoC6
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+
+# The NanoC6 USB-C port is the chip's USB-Serial-JTAG. Make it the primary console:
+# a secondary console is output-only, and USB provisioning needs to read commands from it.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+
+# Dual OTA partition table (partitions.csv) is applied by espflash at flash time
+# (see firmware/espflash.toml); the ESP-IDF build cannot resolve a relative custom path.
+CONFIG_PARTITION_TABLE_OFFSET=0x8000
+
+# OTA Rollback and Boot confirmation
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+CONFIG_APP_ROLLBACK_ENABLE=y
+
+# TLS / Certificate Bundle for secure HTTPS (LINE API & GitHub Releases)
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN=y
+CONFIG_ESP_TLS_USING_MBEDTLS=y
+
+# Task stack sizes for Rust runtime
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=16384
+CONFIG_PTHREAD_TASK_STACK_SIZE_DEFAULT=8192
+
+# Watchdog timer
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
+
+# SNTP time sync
+CONFIG_LWIP_SNTP_MAX_SERVERS=3

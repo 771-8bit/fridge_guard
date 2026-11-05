@@ -1,0 +1,23 @@
+# Firmware-only settings: picked up when cargo runs from the firmware/ directory,
+# so host-side builds and tests of fridge_guard_core are unaffected.
+[build]
+target = "riscv32imac-esp-espidf"
+
+[target.riscv32imac-esp-espidf]
+linker = "ldproxy"
+# Flashes with the ESP-IDF-built bootloader (OTA rollback) and partitions.csv; see tools/flash.py
+runner = "uv run ../tools/flash.py"
+rustflags = ["-C", "default-linker-libraries"]
+
+[unstable]
+build-std = ["std", "panic_abort"]
+
+[env]
+MCU = "esp32c6"
+ESP_IDF_VERSION = "v5.2.2"
+# Install ESP-IDF and its tools under ~/.espressif (shared across projects, short paths on Windows)
+ESP_IDF_TOOLS_INSTALL_DIR = "global"
+# Lets esp-idf-sys find the workspace (and sdkconfig.defaults) even with a custom CARGO_TARGET_DIR
+CARGO_WORKSPACE_DIR = { value = "..", relative = true }
+ESP_IDF_SYS_ROOT_CRATE = "fridge_guard_firmware"
+ESP_IDF_SDKCONFIG_DEFAULTS = { value = "../sdkconfig.defaults", relative = true }

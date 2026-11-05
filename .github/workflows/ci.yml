@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    name: Rust fmt, clippy & host tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting (whole workspace, incl. firmware)
+        run: cargo fmt --check
+
+      - name: Clippy (fridge_guard_core, incl. tests)
+        run: cargo clippy -p fridge_guard_core --all-targets -- -D warnings
+
+      - name: Host-side unit and acceptance tests
+        run: cargo test -p fridge_guard_core
+
+  firmware:
+    name: Firmware build (ESP32-C6), clippy & OTA size gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+
+      - name: Cache cargo and ESP-IDF
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: firmware-${{ hashFiles('sdkconfig.defaults', 'firmware/.cargo/config.toml') }}
+          cache-directories: ~/.espressif
+
+      - name: Install ESP-IDF build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build python3-venv libclang-dev
+
+      - name: Install ldproxy and espflash
+        run: |
+          cargo install ldproxy --locked
+          curl -sSfL -o "$RUNNER_TEMP/espflash.zip" https://github.com/esp-rs/espflash/releases/download/v4.5.0/espflash-x86_64-unknown-linux-musl.zip
+          unzip -o "$RUNNER_TEMP/espflash.zip" -d "$HOME/.cargo/bin"
+          chmod +x "$HOME/.cargo/bin/espflash"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # Fails with a clear message if firmware/ota_verification_public.pem has not been committed
+      - name: Build firmware
+        working-directory: firmware
+        run: cargo build --release
+
+      - name: Clippy (firmware)
+        working-directory: firmware
+        run: cargo clippy --release -- -D warnings
+
+      - name: Create OTA image and run size gate
+        working-directory: firmware
+        run: |
+          espflash save-image --chip esp32c6 ../target/riscv32imac-esp-espidf/release/fridge_guard_firmware ../target/fridge_guard_firmware.bin
+          uv run ../tools/size_gate.py ../target/fridge_guard_firmware.bin --partitions ../partitions.csv
+
+      - name: Upload firmware image
+        uses: actions/upload-artifact@v4
+        with:
+          name: fridge_guard_firmware
+          path: |
+            target/fridge_guard_firmware.bin
+            target/riscv32imac-esp-espidf/release/bootloader.bin
+
+  tools:
+    name: Secret scan, OTA manifest & Python tools
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Secret scan
+        run: uv run tools/release.py --scan-only
+
+      # release/manifest.json exists only after the first release (see docs/OTA_RELEASE.md)
+      - name: Verify OTA manifest signature against the embedded public key
+        if: hashFiles('release/manifest.json') != ''
+        run: uv run tools/release.py --verify-manifest release/manifest.json
+
+      - name: Byte-compile Python tools
+        run: python3 -m py_compile tools/*.py

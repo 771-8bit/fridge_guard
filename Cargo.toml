@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/fridge_guard_core",
+    "firmware",
+]
+default-members = ["crates/fridge_guard_core"]
+resolver = "2"

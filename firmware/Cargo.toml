@@ -1,0 +1,30 @@
+[package]
+name = "fridge_guard_firmware"
+version = "0.1.0"
+edition = "2021"
+authors = ["771-8bit"]
+license = "MIT"
+description = "ESP32-C6 / M5Stack NanoC6 production firmware for Fridge Guard"
+
+[dependencies]
+fridge_guard_core = { path = "../crates/fridge_guard_core" }
+esp-idf-svc = { version = "0.51", default-features = false, features = ["alloc", "std"] }
+esp-idf-hal = "0.45"
+esp-idf-sys = { version = "0.36", default-features = false }
+embedded-svc = { version = "0.28", default-features = false }
+log = "0.4"
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+
+[build-dependencies]
+embuild = "0.33"
+
+[lints.rust]
+# cfgs emitted by esp-idf-sys (via embuild) and used inside esp_idf_sys::esp_app_desc!()
+unexpected_cfgs = { level = "warn", check-cfg = [
+    "cfg(esp_idf_app_compile_time_date)",
+    "cfg(esp_idf_app_reproducible_build)",
+    "cfg(esp_idf_version_major, values(any()))",
+    "cfg(esp_idf_version, values(any()))",
+    "cfg(esp_idf_version_full, values(any()))",
+] }

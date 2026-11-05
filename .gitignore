@@ -1,0 +1,43 @@
+# Rust / Cargo build artifacts
+target/
+Cargo.lock.orig
+
+# ESP-IDF build artifacts
+build/
+sdkconfig
+sdkconfig.old
+release/*.bin
+
+# Secrets and local configurations
+*.pem
+!firmware/ota_verification_public.pem
+*.key
+*.p12
+*.crt
+*.cert
+.env
+.env.*
+!.env.example
+secrets.json
+config.local.json
+.line_user_id
+
+# Local provisioning and developer caches
+.local_provisioning/
+tools/__pycache__/
+.venv/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor and OS junk
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
