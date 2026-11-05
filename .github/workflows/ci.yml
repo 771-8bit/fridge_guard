@@ -78,6 +78,14 @@ jobs:
         working-directory: firmware
         run: cargo build --release
 
+      - name: Diagnose ESP-IDF tool install
+        if: failure()
+        run: |
+          df -h /
+          python3 --version
+          python3 "$HOME/.espressif/esp-idf/v5.2.2/tools/idf_tools.py" --non-interactive install --targets esp32c6 || echo "idf_tools exit: $?"
+          python3 "$HOME/.espressif/esp-idf/v5.2.2/tools/idf_tools.py" check || true
+
       - name: Clippy (firmware)
         working-directory: firmware
         run: cargo clippy --release -- -D warnings
